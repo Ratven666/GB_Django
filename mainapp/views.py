@@ -1,11 +1,11 @@
 from datetime import datetime
 
 from django.http import HttpResponse
-from django.shortcuts import render
+from django.shortcuts import render, get_object_or_404
 from django.views import View
 from django.views.generic import TemplateView
 
-# Create your views here.
+from mainapp import models as mainapp_models
 
 
 class MainPageView(TemplateView):
@@ -16,12 +16,19 @@ class NewsPageView(TemplateView):
     template_name = "mainapp/news.html"
 
     def get_context_data(self, **kwargs):
+        # Get all previous data
         context = super().get_context_data(**kwargs)
+        # Create your own data
+        context["news_qs"] = mainapp_models.News.objects.all()[:5]
+        return context
 
-        context["news_title"] = "MY TITLE!"
-        context["news_preview"] = "News description"
-        context["range"] = range(1, 6)
-        context["datetime_obj"] = datetime.now()
+
+class NewsPageDetailView(TemplateView):
+    template_name = "mainapp/news_detail.html"
+
+    def get_context_data(self, pk=None, **kwargs):
+        context = super().get_context_data(pk=pk, **kwargs)
+        context["news_object"] = get_object_or_404(mainapp_models.News, pk=pk)
         return context
 
 
@@ -34,6 +41,22 @@ class NewsWithPaginatorView(NewsPageView):
 
 class CoursesPageView(TemplateView):
     template_name = "mainapp/courses_list.html"
+
+    def get_context_data(self, **kwargs):
+        # Get all previous data
+        context = super().get_context_data(**kwargs)
+        # Create your own data
+        context["courses_qs"] = mainapp_models.Courses.objects.all()
+        return context
+
+
+class CoursesPageDetailView(TemplateView):
+    template_name = "mainapp/courses_detail.html"
+
+    def get_context_data(self, pk=None, **kwargs):
+        context = super().get_context_data(pk=pk, **kwargs)
+        context["course_object"] = get_object_or_404(mainapp_models.Courses, pk=pk)
+        return context
 
 
 class ContactsPageView(TemplateView):
