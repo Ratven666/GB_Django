@@ -135,6 +135,7 @@ class CoursesDetailView(TemplateView):
 class CourseFeedbackFormProcessView(LoginRequiredMixin, CreateView):
     model = mainapp_models.CourseFeedback
     form_class = mainapp_forms.CourseFeedbackForm
+
     def form_valid(self, form):
         self.object = form.save()
         rendered_card = render_to_string(
@@ -145,8 +146,6 @@ class CourseFeedbackFormProcessView(LoginRequiredMixin, CreateView):
 
 class ContactsPageView(TemplateView):
     template_name = "mainapp/contacts.html"
-
-
 
 
 class ContactsPageView(TemplateView):
