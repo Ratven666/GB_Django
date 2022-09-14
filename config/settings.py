@@ -113,7 +113,7 @@ AUTH_USER_MODEL = "authapp.CustomUser"
 AUTHENTICATION_BACKENDS = (
     "social_core.backends.github.GithubOAuth2",
     "django.contrib.auth.backends.ModelBackend",
-    )
+)
 
 SOCIAL_AUTH_GITHUB_KEY = "216bf13571886799083c"
 SOCIAL_AUTH_GITHUB_SECRET = "aadb9531c37bcd4625cfcdfa7b2ae6fcbbbf1ee3"
@@ -155,3 +155,31 @@ LOGOUT_REDIRECT_URL = "mainapp:main_page"
 MESSAGE_STORAGE = "django.contrib.messages.storage.session.SessionStorage"
 
 CRISPY_TEMPLATE_PACK = "bootstrap4"
+
+LOG_FILE = BASE_DIR / "var" / "log" / "main_log.log"
+
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "console": {
+            "format": "[%(asctime)s] %(levelname)s %(name)s (%(lineno)d) %(message)s"
+        },
+    },
+    "handlers": {
+        "file": {
+            "level": "DEBUG",
+            "class": "logging.FileHandler",
+            "filename": LOG_FILE,
+            "formatter": "console",
+        },
+        "console": {"class": "logging.StreamHandler", "formatter": "console"},
+    },
+    "loggers": {
+        "django": {"level": "INFO", "handlers": ["console"]},
+        "mainapp": {
+            "level": "DEBUG",
+            "handlers": ["file"],
+        },
+    },
+}
