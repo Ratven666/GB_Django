@@ -5,7 +5,8 @@ from django.contrib.auth.mixins import (
     PermissionRequiredMixin, UserPassesTestMixin,
 )
 from django.core.cache import cache
-from django.http import JsonResponse, FileResponse
+from django.contrib import messages
+from django.http import JsonResponse, FileResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404
 from django.template.loader import render_to_string
 from django.urls import reverse_lazy
@@ -22,6 +23,8 @@ from django.views.generic import (
 from config import settings
 from mainapp import forms as mainapp_forms
 from mainapp import models as mainapp_models
+from mainapp import tasks as mainapp_tasks
+from django.utils.translation import gettext_lazy as _
 
 logger = logging.getLogger(__name__)
 
@@ -60,52 +63,6 @@ class NewsDeleteView(PermissionRequiredMixin, DeleteView):
     model = mainapp_models.News
     success_url = reverse_lazy("mainapp:news")
     permission_required = ("mainapp.delete_news",)
-#
-# class NewsPageView(TemplateView):
-#     template_name = "mainapp/news.html"
-#
-#     def get_context_data(self, **kwargs):
-#         # Get all previous data
-#         context = super().get_context_data(**kwargs)
-#         # Create your own data
-#         context["news_qs"] = mainapp_models.News.objects.all()[:5]
-#         return context
-#
-#
-# class NewsPageDetailView(TemplateView):
-#     template_name = "mainapp/news_detail.html"
-#
-#     def get_context_data(self, pk=None, **kwargs):
-#         context = super().get_context_data(pk=pk, **kwargs)
-#         context["news_object"] = get_object_or_404(mainapp_models.News, pk=pk)
-#         return context
-#
-#
-# class NewsWithPaginatorView(NewsPageView):
-#     def get_context_data(self, page, **kwargs):
-#         context = super().get_context_data(page=page, **kwargs)
-#         context["page_num"] = page
-#         return context
-#
-#
-# class CoursesPageView(TemplateView):
-#     template_name = "mainapp/courses_list.html"
-#
-#     def get_context_data(self, **kwargs):
-#         # Get all previous data
-#         context = super().get_context_data(**kwargs)
-#         # Create your own data
-#         context["courses_qs"] = mainapp_models.Courses.objects.all()
-#         return context
-#
-#
-# class CoursesPageDetailView(TemplateView):
-#     template_name = "mainapp/courses_detail.html"
-#
-#     def get_context_data(self, pk=None, **kwargs):
-#         context = super().get_context_data(pk=pk, **kwargs)
-#         context["course_object"] = get_object_or_404(mainapp_models.Courses, pk=pk)
-#         return context
 
 
 class CoursesListView(TemplateView):
@@ -168,6 +125,44 @@ class CourseFeedbackFormProcessView(LoginRequiredMixin, CreateView):
 
 class ContactsPageView(TemplateView):
     template_name = "mainapp/contacts.html"
+
+    def get_context_data(self, **kwargs):
+        context = super(ContactsPageView, self).get_context_data(**kwargs)
+
+        if self.request.user.is_authenticated:
+            context["form"] = mainapp_forms.MailFeedbackForm(
+                user=self.request.user
+            )
+        return context
+
+    def post(self, *args, **kwargs):
+        if self.request.user.is_authenticated:
+            cache_lock_flag = cache.get(
+                f"mail_feedback_lock_{self.request.user.pk}"
+            )
+
+            if not cache_lock_flag:
+                cache.set(
+                    f"mail_feedback_lock_{self.request.user.pk}",
+                    "lock",
+                    timeout=300,
+                )
+                messages.add_message(
+                    self.request, messages.INFO, _("Message sended")
+                )
+                mainapp_tasks.send_feedback_mail.delay(
+                    {
+                        "user_id": self.request.POST.get("user_id"),
+                        "message": self.request.POST.get("message"),
+                    }
+                )
+            else:
+                messages.add_message(
+                    self.request,
+                    messages.WARNING,
+                    _("You can send only one message per 5 minutes"),
+                )
+        return HttpResponseRedirect(reverse_lazy("mainapp:contacts"))
 
 
 class ContactsPageView(TemplateView):
