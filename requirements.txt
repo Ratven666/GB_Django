@@ -11,7 +11,7 @@ cv-bridge==1.15.0
 diagnostic-analysis==1.10.4
 diagnostic-common-diagnostics==1.10.4
 diagnostic-updater==1.10.4
-Django==3.2
+Django~=4.1.1
 dynamic-reconfigure==1.7.1
 gazebo_plugins==2.9.2
 gazebo_ros==2.9.2
@@ -100,3 +100,6 @@ tf2-py==0.7.5
 tf2-ros==0.7.5
 topic-tools==1.15.11
 xacro==1.14.6
+
+django-debug-toolbar~=3.6.0
+celery~=5.2.7

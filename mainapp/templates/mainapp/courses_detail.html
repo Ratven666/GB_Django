@@ -1,10 +1,10 @@
 {% extends 'base.html' %}
-{% load static markdownify %}
+{% load static markdownify crispy_forms_tags cache %}
 {% block title %}
 {{ course_object.name }}
 {% endblock title %}
 {% block content %}
-{% load crispy_forms_tags %}
+
 
 <h1 class="mt-2">
     {{ course_object.name }}
@@ -62,6 +62,8 @@
     </div>
 </div>
 <div class="accordion" id="accordionLessons">
+
+    {% cache 300 lessons %}
     {% for item in lessons %}
     <div class="card">
         <div class="card-header" id="headLessonPk{{ item.pk }}">
@@ -94,6 +96,8 @@
         </div>
     </div>
     {% endfor %}
+    {% endcache %}
+
 </div>
 
 <h3>Отзывы</h3>
@@ -146,6 +150,7 @@ $("#feedback_list").append(data.card);
 });
 {% endif %}
 });
+
 </script>
 {% endblock js %}
 
